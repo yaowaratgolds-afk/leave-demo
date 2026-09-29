@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบติดตามใบลา / อนุมัติ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Thai",sans-serif;background:#f4f6f9;color:#253044}
+:root{--blue:#2563eb;--nav:#16213e;--green:#16a34a;--yellow:#d97706;--red:#dc2626}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
+.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#172554,#2563eb)}
+.login-card{width:min(430px,92%);background:#fff;padding:34px;border-radius:20px;box-shadow:0 20px 60px #0004}.login-card h1{margin:0 0 8px}.login-card p{color:#64748b}
+.field{margin:14px 0}.field label{display:block;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid #dbe2ea;border-radius:9px;background:#fff}.field textarea{min-height:90px;resize:vertical}
+.primary{background:var(--blue);color:#fff;padding:11px 16px;border-radius:9px;font-weight:700}.secondary{background:#eef2ff;color:#3730a3;padding:10px 14px;border-radius:9px}.danger{background:#fee2e2;color:#b91c1c;padding:9px 12px;border-radius:8px}.success{background:#dcfce7;color:#166534;padding:9px 12px;border-radius:8px}
+.app{display:none;min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:245px;background:var(--nav);color:#fff;padding:22px 14px}.brand{font-size:20px;font-weight:800;padding:8px 10px 24px}.nav button{width:100%;text-align:left;background:transparent;color:#cbd5e1;padding:12px;border-radius:8px;margin:3px 0}.nav button.active,.nav button:hover{background:#ffffff18;color:#fff}.main{margin-left:245px;padding:26px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h2{margin:0}.user{background:#fff;padding:9px 13px;border-radius:9px;box-shadow:0 2px 10px #00000008}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px #00000009}.card small{color:#64748b}.num{font-size:30px;font-weight:800;margin-top:7px}
+.panel{background:#fff;border-radius:14px;padding:20px;margin-top:18px;box-shadow:0 2px 12px #00000009}.panel h3{margin-top:0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px 10px;border-bottom:1px solid #edf0f3;text-align:left}th{background:#f8fafc;color:#475569}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}.pending{background:#fef3c7;color:#92400e}.approved{background:#dcfce7;color:#166534}.rejected{background:#fee2e2;color:#991b1b}.cancelled{background:#e5e7eb;color:#374151}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.note{background:#f8fafc;border-left:4px solid var(--blue);padding:12px;margin:12px 0;color:#475569}.danger-note{background:#fff7ed;border-left:4px solid #ea580c;padding:12px;margin:12px 0;color:#7c2d12}.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.hidden{display:none}.empty{text-align:center;padding:35px;color:#94a3b8}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:20px}.modal-box{background:#fff;width:min(650px,100%);max-height:90vh;overflow:auto;border-radius:15px;padding:22px}.modal-head{display:flex;justify-content:space-between;align-items:center}.close{background:#f1f5f9;border-radius:8px;padding:7px 10px}
+@media(max-width:900px){.sidebar{width:190px}.main{margin-left:190px}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.sidebar{position:static;width:100%;height:auto}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;width:auto}.main{margin-left:0;padding:16px}.grid2{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}.top{gap:10px}.user{display:none}}
+</style>
+</head>
+<body>
+
+<section id="login" class="login">
+<div class="login-card">
+<h1>📋 ระบบใบลา</h1><p><b>บริษัทเยาวราชโกลด์สมิธ จำกัด</b></p>
+<div class="danger-note">ผู้ใช้ไม่สามารถเลือกบทบาทเองได้ ระบบจะกำหนดสิทธิ์จากบัญชีผู้ใช้</div>
+<div class="field"><label>ชื่อผู้ใช้</label><input id="loginUser" autocomplete="username" placeholder="Username"></div>
+<div class="field"><label>รหัสผ่าน</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Password"></div>
+<button class="primary" style="width:100%" onclick="login()">เข้าสู่ระบบ</button>
+<div class="note" style="font-size:12px"><b>บัญชีตัวอย่างสำหรับทดสอบ</b><br>พนักงาน: <b>employee / 1234</b><br>ผู้อนุมัติ: <b>approver / 5678</b><br>HR/ผู้ดูแล: <b>hr / 9999</b></div>
+<p style="font-size:12px;color:#64748b">หมายเหตุ: บัญชีในไฟล์ HTML นี้เป็น Demo เท่านั้น หากนำไปใช้จริงควรย้ายการตรวจสอบรหัสผ่านและสิทธิ์ไปไว้ฝั่ง Server/ฐานข้อมูล</p>
+</div></section>
+
+<div id="app" class="app">
+  <aside class="sidebar">
+    <div class="brand">📋 ระบบใบลา</div>
+    <div class="nav">
+      <button data-page="dashboard" onclick="showPage('dashboard')">🏠 Dashboard</button>
+      <button data-page="apply" onclick="showPage('apply')">📝 ยื่นใบลา</button>
+      <button data-page="my" onclick="showPage('my')">📋 ใบลาของฉัน</button>
+      <button data-page="approve" onclick="showPage('approve')">✅ รออนุมัติ</button>
+      <button data-page="calendar" onclick="showPage('calendar')">📅 ปฏิทินการลา</button>
+      <button data-page="employees" onclick="showPage('employees')">👥 พนักงาน / รหัสกะ</button>
+      <button data-page="report" onclick="showPage('report')">📊 รายงาน</button>
+    </div>
+    <button onclick="logout()" style="position:absolute;bottom:18px;left:14px;width:calc(100% - 28px);padding:11px;border-radius:8px;background:#ffffff12;color:#fff">ออกจากระบบ</button>
+  </aside>
+
+  <main class="main">
+    <div class="top"><h2 id="pageTitle">Dashboard</h2><div class="user" id="userBox"></div></div>
+
+    <section id="dashboard" class="page">
+      <div class="cards">
+        <div class="card"><small>ใบลาทั้งหมด</small><div class="num" id="cAll">0</div></div>
+        <div class="card"><small>รออนุมัติ</small><div class="num" id="cPending">0</div></div>
+        <div class="card"><small>อนุมัติแล้ว</small><div class="num" id="cApproved">0</div></div>
+        <div class="card"><small>ไม่อนุมัติ</small><div class="num" id="cRejected">0</div></div>
+      </div>
+      <div class="panel"><h3>รายการใบลาล่าสุด</h3><div id="recent"></div></div>
+    </section>
+
+    <section id="apply" class="page hidden"><div class="panel">
+<h3>📝 ยื่นใบลาใหม่</h3>
+<div class="note">ระบบจะนับ <b>เฉพาะวันทำงานตามรหัสกะ</b> อัตโนมัติ: รหัสกะปกติหยุดวันอาทิตย์ ส่วนรหัสกะที่กำหนดไว้สำหรับกลุ่มหยุดเสาร์-อาทิตย์จะไม่นับทั้งเสาร์และอาทิตย์</div>
+<div class="grid2">
+<div class="field"><label>พนักงาน</label><input id="applyUser" readonly></div>
+<div class="field"><label>รหัสกะ</label><input id="applyShift" readonly></div>
+<div class="field"><label>ประเภทการลา</label><select id="leaveType"></select></div>
+<div class="field"><label>วันที่เริ่มลา</label><input type="date" id="start"></div>
+<div class="field"><label>วันที่สิ้นสุด</label><input type="date" id="end"></div>
+<div class="field"><label>จำนวนวันลา (วันทำงาน)</label><input id="days" readonly placeholder="คำนวณอัตโนมัติ"></div>
+</div>
+<div id="countDetail" class="note" style="display:none"></div>
+<div class="field"><label>เหตุผลการลา</label><textarea id="reason" placeholder="ระบุเหตุผล"></textarea></div>
+<div class="field"><label>เอกสารแนบ</label><input type="file" id="attachment"></div>
+<div class="form-actions"><button class="secondary" onclick="clearForm()">ล้างข้อมูล</button><button class="primary" onclick="submitLeave()">ส่งใบลาเพื่ออนุมัติ</button></div>
+</div></section>
+
+    <section id="my" class="page hidden"><div class="panel"><h3>📋 ใบลาของฉัน</h3><div id="myTable"></div></div></section>
+    <section id="approve" class="page hidden"><div class="panel"><h3>✅ รายการรออนุมัติ</h3><div id="approveTable"></div></div></section>
+    <section id="calendar" class="page hidden"><div class="panel"><h3>📅 ปฏิทินการลา</h3><div id="calendarList"></div></div></section>
+    <section id="employees" class="page hidden"><div class="panel">
+<h3>👥 ข้อมูลพนักงาน / รหัสกะ</h3><div class="danger-note">หน้านี้สงวนสิทธิ์สำหรับ HR/ผู้ดูแลระบบ</div>
+<div id="employeeBox"></div>
+<h3 style="margin-top:24px">ตั้งค่ารหัสกะที่หยุดเสาร์-อาทิตย์</h3>
+<div class="field"><label>รหัสกะ คั่นด้วยเครื่องหมาย ,</label><input id="weekendCodes"></div>
+<button class="primary" onclick="saveShiftSettings()">บันทึกการตั้งค่ากะ</button>
+<div class="note">ตัวอย่าง <b>WKND</b> = หยุดเสาร์-อาทิตย์ และ <b>STD</b> = หยุดอาทิตย์ หากมีรหัสกะจริงของบริษัท สามารถนำมาใส่แทนได้</div>
+</div></section>
+<section id="report" class="page hidden"><div class="panel"><h3>📊 รายงานสรุป</h3><div id="reportBox"></div></div></section>
+  </main>
+</div>
+
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3>รายละเอียดใบลา</h3><button class="close" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const LEAVE_TYPES=['ขาดงาน','ป่วยมีใบแพทย์','ป่วยไม่มีใบแพทย์','ลากิจ','ลากิจ(ไม่รับเงิน)','ลากิจไม่รับเงิน (ทดลองงาน)','ลาคลอด','ลาคลอด(ไม่รับเงิน)','ลางานศพ','ลาป่วย (ทดลองงาน)','ลาพักร้อน'];
+const USERS={
+ employee:{username:'employee',password:'1234',name:'สมชาย ใจดี',role:'employee',shiftCode:'STD',label:'พนักงาน'},
+ approver:{username:'approver',password:'5678',name:'หัวหน้างาน',role:'approver',shiftCode:'STD',label:'ผู้อนุมัติ'},
+ hr:{username:'hr',password:'9999',name:'ฝ่าย HR',role:'admin',shiftCode:'STD',label:'HR / ผู้ดูแลระบบ'}
+};
+const seed=[
+{id:'LV-0001',user:'สมชาย ใจดี',username:'employee',shiftCode:'STD',type:'ลากิจ',start:'2026-09-28',end:'2026-09-29',days:2,reason:'ติดต่อธุระส่วนตัว',status:'รออนุมัติ',created:'2026-09-25 09:20',approver:''},
+{id:'LV-0002',user:'สมหญิง พรดี',username:'employee2',shiftCode:'WKND',type:'ป่วยมีใบแพทย์',start:'2026-09-24',end:'2026-09-24',days:1,reason:'ไม่สบาย',status:'อนุมัติแล้ว',created:'2026-09-23 15:10',approver:'หัวหน้างาน'},
+{id:'LV-0003',user:'วิชัย มีสุข',username:'employee3',shiftCode:'STD',type:'ลาพักร้อน',start:'2026-10-05',end:'2026-10-07',days:3,reason:'พักผ่อนประจำปี',status:'รออนุมัติ',created:'2026-09-24 11:45',approver:''}
+];
+let leaves=JSON.parse(localStorage.getItem('leaveDataV2')||'null')||seed;
+let weekendCodes=JSON.parse(localStorage.getItem('weekendCodesV2')||'["WKND"]');
+let currentUser=null;
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem('leaveDataV2',JSON.stringify(leaves))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function isAdmin(){return currentUser?.role==='admin'}
+function canApprove(){return currentUser?.role==='approver'||currentUser?.role==='admin'}
+function login(){
+ const u=$('loginUser').value.trim(),p=$('loginPass').value,found=Object.values(USERS).find(x=>x.username===u&&x.password===p);
+ if(!found){alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');return}
+ currentUser={...found};$('login').style.display='none';$('app').style.display='block';
+ $('userBox').textContent=currentUser.name+' · '+currentUser.label;$('applyUser').value=currentUser.name;$('applyShift').value=currentUser.shiftCode;
+ $('leaveType').innerHTML=LEAVE_TYPES.map(x=>`<option>${x}</option>`).join('');showPage('dashboard')
+}
+function logout(){currentUser=null;$('app').style.display='none';$('login').style.display='grid';$('loginPass').value=''}
+function showPage(page){
+ if(page==='approve'&&!canApprove()){alert('บัญชีนี้ไม่มีสิทธิ์อนุมัติใบลา');return}
+ if(page==='employees'&&!isAdmin()){alert('หน้านี้สงวนสิทธิ์สำหรับ HR/ผู้ดูแลระบบ');return}
+ document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(page).classList.remove('hidden');
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
+ $('pageTitle').textContent={dashboard:'Dashboard',apply:'ยื่นใบลา',my:'ใบลาของฉัน',approve:'รออนุมัติ',calendar:'ปฏิทินการลา',employees:'พนักงาน / รหัสกะ',report:'รายงาน'}[page]||'ระบบใบลา';render()
+}
+function isWeekendOff(code){return weekendCodes.map(x=>x.toUpperCase()).includes((code||'').trim().toUpperCase())}
+function dateParts(start,end,shiftCode){
+ const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00'),work=[],off=[];
+ if(isNaN(a)||isNaN(b)||b<a)return{work,off};
+ for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1)){
+  const dow=d.getDay(),iso=d.toISOString().slice(0,10),isOff=isWeekendOff(shiftCode)?(dow===0||dow===6):(dow===0);
+  (isOff?off:work).push(iso)
+ }
+ return{work,off}
+}
+function calc(){
+ if(!$('start').value||!$('end').value)return;
+ const r=dateParts($('start').value,$('end').value,currentUser?.shiftCode||'STD');$('days').value=r.work.length;
+ $('countDetail').style.display='block';$('countDetail').innerHTML=`นับวันลา <b>${r.work.length} วันทำงาน</b> · ไม่นับวันหยุด ${r.off.length} วัน ${r.off.length?'('+r.off.join(', ')+')':''}`
+}
+$('start').addEventListener('change',calc);$('end').addEventListener('change',calc);
+function clearForm(){$('start').value='';$('end').value='';$('days').value='';$('reason').value='';$('countDetail').style.display='none';$('attachment').value=''}
+function submitLeave(){
+ if(!$('start').value||!$('end').value||!$('reason').value.trim()){alert('กรุณากรอกข้อมูลให้ครบ');return}
+ const r=dateParts($('start').value,$('end').value,currentUser.shiftCode);if(!r.work.length){alert('ช่วงวันที่เลือกไม่มีวันทำงานตามรหัสกะของคุณ');return}
+ const id='LV-'+String(Date.now()).slice(-6);
+ leaves.unshift({id,user:currentUser.name,username:currentUser.username,shiftCode:currentUser.shiftCode,type:$('leaveType').value,start:$('start').value,end:$('end').value,days:r.work.length,excludedDates:r.off,reason:$('reason').value.trim(),status:'รออนุมัติ',created:new Date().toLocaleString('th-TH'),approver:'',attachment:$('attachment').files[0]?.name||''});
+ save();clearForm();alert('ส่งใบลาเรียบร้อยแล้ว เลขที่ '+id);showPage('my')
+}
+function badge(s){const c=s==='รออนุมัติ'?'pending':s==='อนุมัติแล้ว'?'approved':s==='ไม่อนุมัติ'?'rejected':'cancelled';return `<span class="badge ${c}">${s}</span>`}
+function table(arr,approval=false){
+ if(!arr.length)return '<div class="empty">ไม่มีรายการ</div>';
+ return `<div class="table-wrap"><table><thead><tr><th>เลขที่</th><th>ผู้ขอ</th><th>รหัสกะ</th><th>ประเภท</th><th>วันที่ลา</th><th>วันทำงาน</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead><tbody>`+
+ arr.map(x=>`<tr><td>${x.id}</td><td>${esc(x.user)}</td><td>${esc(x.shiftCode||'-')}</td><td>${esc(x.type)}</td><td>${x.start} ถึง ${x.end}</td><td>${x.days}</td><td>${badge(x.status)}</td><td><button class="secondary" onclick="detail('${x.id}')">ดู</button> ${approval&&x.status==='รออนุมัติ'?`<button class="success" onclick="decide('${x.id}','อนุมัติแล้ว')">อนุมัติ</button> <button class="danger" onclick="decide('${x.id}','ไม่อนุมัติ')">ไม่อนุมัติ</button>`:''}</td></tr>`).join('')+'</tbody></table></div>'
+}
+function render(){
+ if(!currentUser)return;const mine=leaves.filter(x=>x.username===currentUser.username),pending=leaves.filter(x=>x.status==='รออนุมัติ');
+ $('cAll').textContent=leaves.length;$('cPending').textContent=pending.length;$('cApproved').textContent=leaves.filter(x=>x.status==='อนุมัติแล้ว').length;$('cRejected').textContent=leaves.filter(x=>x.status==='ไม่อนุมัติ').length;
+ $('recent').innerHTML=table(leaves.slice(0,8),canApprove());$('myTable').innerHTML=table(mine);$('approveTable').innerHTML=canApprove()?table(pending,true):'<div class="empty">บัญชีนี้ไม่มีสิทธิ์อนุมัติ</div>';
+ $('calendarList').innerHTML=table(leaves.filter(x=>x.status==='อนุมัติแล้ว').sort((a,b)=>a.start.localeCompare(b.start)));renderEmployees();renderReport()
+}
+function decide(id,status){
+ if(!canApprove())return;const x=leaves.find(a=>a.id===id);if(!x)return;
+ if(status==='ไม่อนุมัติ'){const reason=prompt('ระบุเหตุผลที่ไม่อนุมัติ:');if(!reason||!reason.trim())return;x.rejectReason=reason.trim()}
+ x.status=status;x.approver=currentUser.name;x.approvedAt=new Date().toLocaleString('th-TH');save();render()
+}
+function detail(id){
+ const x=leaves.find(a=>a.id===id);
+ $('modalBody').innerHTML=`<p><b>เลขที่:</b> ${x.id}</p><p><b>ผู้ขอ:</b> ${esc(x.user)}</p><p><b>รหัสกะ:</b> ${esc(x.shiftCode||'-')} · ${isWeekendOff(x.shiftCode)?'หยุดเสาร์-อาทิตย์':'หยุดวันอาทิตย์'}</p><p><b>ประเภท:</b> ${esc(x.type)}</p><p><b>ช่วงวันที่:</b> ${x.start} ถึง ${x.end}</p><p><b>จำนวนวันลา:</b> <b>${x.days} วันทำงาน</b></p><p><b>วันที่ไม่นับเป็นวันลา:</b> ${x.excludedDates?.length?x.excludedDates.join(', '):'-'}</p><p><b>เหตุผล:</b> ${esc(x.reason)}</p><p><b>เอกสารแนบ:</b> ${esc(x.attachment||'-')}</p><p><b>สถานะ:</b> ${badge(x.status)}</p><p><b>ผู้ดำเนินการ:</b> ${esc(x.approver||'-')}</p><p><b>วันที่ดำเนินการ:</b> ${esc(x.approvedAt||'-')}</p>${x.rejectReason?`<p><b>เหตุผลไม่อนุมัติ:</b> ${esc(x.rejectReason)}</p>`:''}<p><b>ส่งเมื่อ:</b> ${esc(x.created)}</p>`;
+ $('modal').style.display='flex'
+}
+function closeModal(){$('modal').style.display='none'}
+function renderEmployees(){
+ if(!isAdmin()){$('employeeBox').innerHTML='<div class="empty">สงวนสิทธิ์สำหรับ HR/ผู้ดูแลระบบ</div>';return}
+ const people=[...new Map(leaves.map(x=>[x.username,x])).values()];
+ $('employeeBox').innerHTML=`<div class="table-wrap"><table><thead><tr><th>ชื่อ</th><th>Username</th><th>รหัสกะ</th><th>วันหยุด</th></tr></thead><tbody>`+people.map(x=>`<tr><td>${esc(x.user)}</td><td>${esc(x.username||'-')}</td><td>${esc(x.shiftCode||'-')}</td><td>${isWeekendOff(x.shiftCode)?'เสาร์-อาทิตย์':'อาทิตย์'}</td></tr>`).join('')+'</tbody></table></div>';
+ $('weekendCodes').value=weekendCodes.join(', ')
+}
+function saveShiftSettings(){
+ if(!isAdmin())return;weekendCodes=$('weekendCodes').value.split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);
+ localStorage.setItem('weekendCodesV2',JSON.stringify(weekendCodes));alert('บันทึกรหัสกะที่หยุดเสาร์-อาทิตย์แล้ว');render()
+}
+function renderReport(){
+ const types={};leaves.forEach(x=>types[x.type]=(types[x.type]||0)+1);const approvedDays=leaves.filter(x=>x.status==='อนุมัติแล้ว').reduce((a,x)=>a+x.days,0);
+ $('reportBox').innerHTML='<div class="grid2"><div><b>สรุปตามประเภทการลา</b><ul>'+Object.entries(types).map(([k,v])=>`<li>${esc(k)}: ${v} ใบ</li>`).join('')+'</ul></div><div><b>วันลาที่อนุมัติแล้ว</b><div class="num">'+approvedDays+' วันทำงาน</div></div></div>'
+}
+$('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+render();
+</script>
+</body></html>
